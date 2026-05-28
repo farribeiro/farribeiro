@@ -15,6 +15,6 @@ Here are some ideas to get you started:
 - ⚡ Fun fact: ...
 -->
 
-<a href="https://github.com/SEU_USUARIO">
+<a href="https://github.com/farribeiro">
   <img src="https://github-readme-stats.vercel.app/api?username=SEU_USUARIO&show_icons=true&theme=radial" alt="Estatísticas do GitHub" />
 </a>
