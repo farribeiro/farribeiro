@@ -93,3 +93,7 @@ for (let i = 1; i <= lastDay; i++) {
 
 daysContainer.innerHTML = daysHtml;
 </script>
+
+## Links rápidos
+
+[https://www.globo.com](https://www.globo.com)
