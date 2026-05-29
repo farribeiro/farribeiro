@@ -15,14 +15,14 @@ Here are some ideas to get you started:
 - ⚡ Fun fact: ...
 -->
 
-## Links rápidos
+# Links rápidos
 
-[Calendário](cal.html)
+## [Calendário](cal.html)
 
-[Relógio](https://www.timeanddate.com/worldclock/brazil/sao-jose-do-rio-preto)
+## [Relógio](https://www.timeanddate.com/worldclock/brazil/sao-jose-do-rio-preto)
 
-[Globo.com](https://www.globo.com)
+## [Globo.com](https://www.globo.com)
 
-[UOL](https://www.uol.com.br)
+## [UOL](https://www.uol.com.br)
 
-[BR-Linux](https://www.br-linux.org)
+## [BR-Linux](https://www.br-linux.org)
