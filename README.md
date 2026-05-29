@@ -19,7 +19,7 @@ Here are some ideas to get you started:
 
 [Calendário](cal.html)
 
-[Relógio](clock.html)
+[Relógio](https://www.timeanddate.com/worldclock/brazil/sao-jose-do-rio-preto)
 
 [Globo.com](https://www.globo.com)
 
