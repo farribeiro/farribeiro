@@ -19,7 +19,7 @@ Here are some ideas to get you started:
 
 ## [Calendário](cal.html)
 
-## [Rekindle.ink](https://www.rekindle.ink)
+## [Rekindle.ink](https://rekindle.ink)
 
 ## [Globo.com](https://www.globo.com)
 
