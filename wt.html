@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tocador WebTorrent - Streaming Otimizado</title>
+  <title>Tocador WebTorrent</title>
   
-  <!-- Última versão do WebTorrent via CDN -->
+  <!-- Biblioteca WebTorrent atualizada -->
   <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
 
   <style>
@@ -75,6 +75,7 @@
       gap: 12px;
       padding: 20px;
       text-align: center;
+      z-index: 10;
     }
 
     .spinner {
@@ -135,13 +136,13 @@
 <body>
 
   <div class="container">
-    <h1>WebTorrent - Streaming Direto de Vídeo</h1>
+    <h1>WebTorrent Player - Exclusivo Vídeo</h1>
 
     <div class="player-wrapper">
-      <video id="video-player" controls autoplay playsinline></video>
+      <video id="video-player" controls autoplay playsinline muted></video>
       <div id="status-overlay" class="status-overlay">
         <div class="spinner"></div>
-        <p id="status-text">Conectando aos pares BitTorrent/WebRTC...</p>
+        <p id="status-text">Conectando aos pares WebRTC/BitTorrent...</p>
       </div>
     </div>
 
@@ -183,54 +184,53 @@
     const numPeersEl = document.getElementById('num-peers');
     const progressPercentEl = document.getElementById('progress-percent');
 
-    // Adiciona o torrent sem iniciar download automático de tudo
-    client.add(torrentUrl, { maxParallelFetches: 2 }, function (torrent) {
-      statusText.innerText = 'Analisando arquivos do torrent...';
+    client.add(torrentUrl, function (torrent) {
+      statusText.innerText = 'Buscando arquivo de vídeo...';
 
-      // 1. DESATIVA o download de todos os arquivos do torrent
-      torrent.deselect(0, torrent.pieces.length - 1, 0);
+      // 1. Cancela o download de todos os arquivos extras (legendas, capas, etc)
+      torrent.files.forEach(file => file.deselect());
 
-      // 2. Localiza APENAS o arquivo de vídeo
+      // 2. Filtra apenas o arquivo de vídeo principal
       const videoFile = torrent.files.find(file => 
         file.name.endsWith('.mp4') || file.name.endsWith('.mkv') || file.name.endsWith('.webm')
       );
 
       if (!videoFile) {
-        statusText.innerText = 'Nenhum arquivo de vídeo encontrado no torrent.';
+        statusText.innerText = 'Nenhum arquivo de vídeo compatível encontrado.';
         return;
       }
 
-      statusText.innerText = `Otimizando streaming para: ${videoFile.name}...`;
+      statusText.innerText = `Iniciando streaming de: ${videoFile.name}`;
 
-      // 3. SELECIONA exclusivamente o arquivo de vídeo para download
+      // 3. Seleciona APENAS o arquivo de vídeo para download
       videoFile.select();
 
-      // 4. PRIORIZA O PRIMEIRO E O ÚLTIMO PEDAÇO DO ARQUIVO DE VÍDEO
-      // (Opcional/Reforço manual de peças críticas para metadados como MOOV atom)
-      const startPiece = Math.floor(videoFile._startPiece);
-      const endPiece = Math.floor(videoFile._endPiece);
-      
-      // Prioridade máxima para as 2 primeiras e 2 últimas peças do vídeo
-      torrent.critical(startPiece, Math.min(startPiece + 2, endPiece));
-      torrent.critical(Math.max(startPiece, endPiece - 2), endPiece);
-
-      // 5. RENDERIZA NO PLAYER (renderTo lida com o streaming sequencial sob demanda)
+      // 4. Renderiza direto na tag HTML <video>
+      // O renderTo do WebTorrent já ajusta a prioridade sequencial e busca os trechos essenciais (início/fim)
       videoFile.renderTo(videoPlayer, {
         autoplay: true,
         controls: true
-      }, function (err) {
+      }, function (err, elem) {
         if (err) {
-          statusText.innerText = 'Erro ao carregar o vídeo: ' + err.message;
-          return;
+          console.error('Erro na renderização:', err);
+          statusText.innerText = 'Erro ao decodificar streaming: ' + err.message;
         }
       });
 
-      // Oculta o overlay quando o vídeo estiver pronto para reprodução
+      // Eventos para ocultar o overlay assim que houver buffer suficiente
+      videoPlayer.addEventListener('loadedmetadata', () => {
+        statusText.innerText = 'Carregando buffer inicial...';
+      });
+
+      videoPlayer.addEventListener('playing', () => {
+        statusOverlay.style.display = 'none';
+      });
+
       videoPlayer.addEventListener('canplay', () => {
         statusOverlay.style.display = 'none';
       });
 
-      // Atualiza as estatísticas do arquivo de vídeo selecionado
+      // Atualização de métricas na interface
       setInterval(() => {
         const progress = (videoFile.progress * 100).toFixed(1);
         progressBar.style.width = progress + '%';
@@ -243,8 +243,8 @@
     });
 
     client.on('error', function (err) {
-      console.error('Erro no WebTorrent:', err);
-      statusText.innerText = 'Erro na rede WebTorrent: ' + err.message;
+      console.error('Erro no cliente WebTorrent:', err);
+      statusText.innerText = 'Erro de rede: ' + err.message;
     });
 
     function prettyBytes(num) {
