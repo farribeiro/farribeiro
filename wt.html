@@ -3,9 +3,8 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Tocador WebTorrent</title>
+		<title>WebTorrent - Streaming Progressivo Real</title>
 
-		<!-- Biblioteca WebTorrent atualizada -->
 		<script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
 
 		<style>
@@ -67,21 +66,37 @@
 				object-fit: contain;
 			}
 
-			.status-overlay {
+			.overlay {
 				position: absolute;
 				top: 0;
 				left: 0;
 				right: 0;
 				bottom: 0;
-				background: rgba(15, 23, 42, 0.9);
+				background: rgba(15, 23, 42, 0.92);
 				display: flex;
 				flex-direction: column;
 				align-items: center;
 				justify-content: center;
-				gap: 12px;
+				gap: 16px;
 				padding: 20px;
 				text-align: center;
 				z-index: 10;
+			}
+
+			.btn-start {
+				background: #0284c7;
+				color: #fff;
+				border: none;
+				padding: 12px 28px;
+				font-size: 1rem;
+				font-weight: 600;
+				border-radius: 6px;
+				cursor: pointer;
+				transition: background 0.2s;
+			}
+
+			.btn-start:hover {
+				background: #0369a1;
 			}
 
 			.spinner {
@@ -102,7 +117,7 @@
 			.stats {
 				margin-top: 20px;
 				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+				grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
 				gap: 12px;
 			}
 
@@ -139,24 +154,39 @@
 				background: #38bdf8;
 				transition: width 0.3s ease;
 			}
+
+			#log-box {
+				margin-top: 16px;
+				background: #0f172a;
+				border-radius: 6px;
+				padding: 12px;
+				font-family: monospace;
+				font-size: 0.8rem;
+				color: #38bdf8;
+				max-height: 90px;
+				overflow-y: auto;
+				text-align: left;
+			}
 		</style>
 	</head>
 	<body>
 		<div class="container">
-			<h1>WebTorrent Player - Exclusivo Vídeo</h1>
+			<h1>WebTorrent - Streaming Progressivo</h1>
 
 			<div class="player-wrapper">
-				<video
-					id="video-player"
-					controls
-					autoplay
-					playsinline
-					muted
-				></video>
-				<div id="status-overlay" class="status-overlay">
-					<div class="spinner"></div>
+				<video id="video-player" controls playsinline></video>
+				<div id="overlay" class="overlay">
+					<button id="btn-start" class="btn-start">
+						▶ Iniciar Streaming
+					</button>
+					<div
+						id="spinner"
+						class="spinner"
+						style="display: none"
+					></div>
 					<p id="status-text">
-						Conectando aos pares WebRTC/BitTorrent...
+						Clique para iniciar a conexão WebTorrent com prioridade
+						sequencial.
 					</p>
 				</div>
 			</div>
@@ -175,7 +205,7 @@
 					<strong id="upload-speed">0 KB/s</strong>
 				</div>
 				<div class="stat-card">
-					<span>Pares (Peers)</span>
+					<span>Peers</span>
 					<strong id="num-peers">0</strong>
 				</div>
 				<div class="stat-card">
@@ -183,16 +213,19 @@
 					<strong id="progress-percent">0%</strong>
 				</div>
 			</div>
+
+			<div id="log-box">Pronto.</div>
 		</div>
 
 		<script>
 			const torrentUrl = "https://webtorrent.io/torrents/sintel.torrent";
-			const client = new WebTorrent();
-
 			const videoPlayer = document.getElementById("video-player");
-			const statusOverlay = document.getElementById("status-overlay");
+			const overlay = document.getElementById("overlay");
+			const btnStart = document.getElementById("btn-start");
+			const spinner = document.getElementById("spinner");
 			const statusText = document.getElementById("status-text");
 			const progressBar = document.getElementById("progress-bar");
+			const logBox = document.getElementById("log-box");
 
 			const downloadSpeedEl = document.getElementById("download-speed");
 			const uploadSpeedEl = document.getElementById("upload-speed");
@@ -200,78 +233,102 @@
 			const progressPercentEl =
 				document.getElementById("progress-percent");
 
-			client.add(torrentUrl, function (torrent) {
-				statusText.innerText = "Buscando arquivo de vídeo...";
+			function log(msg) {
+				console.log(msg);
+				logBox.innerText = `> ${msg}`;
+			}
 
-				// 1. Cancela o download de todos os arquivos extras (legendas, capas, etc)
-				torrent.files.forEach((file) => file.deselect());
+			btnStart.addEventListener("click", () => {
+				btnStart.style.display = "none";
+				spinner.style.display = "block";
+				statusText.innerText = "Conectando aos peers do Sintel...";
+				log("Iniciando WebTorrent...");
 
-				// 2. Filtra apenas o arquivo de vídeo principal
-				const videoFile = torrent.files.find(
-					(file) =>
-						file.name.endsWith(".mp4") ||
-						file.name.endsWith(".mkv") ||
-						file.name.endsWith(".webm"),
-				);
+				const client = new WebTorrent();
 
-				if (!videoFile) {
-					statusText.innerText =
-						"Nenhum arquivo de vídeo compatível encontrado.";
-					return;
-				}
+				client.add(torrentUrl, function (torrent) {
+					log("Torrent adicionado. Isolando arquivo de vídeo...");
 
-				statusText.innerText = `Iniciando streaming de: ${videoFile.name}`;
+					// Desativa tudo para poupar banda e recursos
+					torrent.files.forEach((file) => file.deselect());
 
-				// 3. Seleciona APENAS o arquivo de vídeo para download
-				videoFile.select();
+					// Acha apenas o MP4
+					const videoFile = torrent.files.find((file) =>
+						file.name.endsWith(".mp4"),
+					);
 
-				// 4. Renderiza direto na tag HTML <video>
-				// O renderTo do WebTorrent já ajusta a prioridade sequencial e busca os trechos essenciais (início/fim)
-				videoFile.renderTo(
-					videoPlayer,
-					{
-						autoplay: true,
-						controls: true,
-					},
-					function (err, elem) {
+					if (!videoFile) {
+						statusText.innerText = "Vídeo MP4 não encontrado.";
+						return;
+					}
+
+					log(
+						`Arquivo selecionado: ${videoFile.name} (${(videoFile.length / 1024 / 1024).toFixed(2)} MB)`,
+					);
+
+					// Seleciona exclusivamente o vídeo e ativa o modo sequencial nativo
+					videoFile.select();
+
+					// Força prioridade imediata para o início (cabeçalho) e fim (metadados do MP4)
+					const startPiece = Math.floor(videoFile._startPiece);
+					const endPiece = Math.floor(videoFile._endPiece);
+
+					torrent.critical(
+						startPiece,
+						Math.min(startPiece + 3, endPiece),
+					);
+					torrent.critical(
+						Math.max(startPiece, endPiece - 3),
+						endPiece,
+					);
+
+					log(
+						`Priorizando início [${startPiece}] e fim [${endPiece}]`,
+					);
+
+					// Abordagem direta por MediaSource / Blob stream sequencial seguro
+					videoFile.getBlobURL(function (err, url) {
 						if (err) {
-							console.error("Erro na renderização:", err);
+							log("Erro ao gerar Blob URL: " + err.message);
 							statusText.innerText =
-								"Erro ao decodificar streaming: " + err.message;
+								"Erro ao criar stream do vídeo.";
+							return;
 						}
-					},
-				);
 
-				// Eventos para ocultar o overlay assim que houver buffer suficiente
-				videoPlayer.addEventListener("loadedmetadata", () => {
-					statusText.innerText = "Carregando buffer inicial...";
+						log("Stream inicial obtido! Atribuindo ao player...");
+						videoPlayer.src = url;
+						videoPlayer
+							.play()
+							.then(() => {
+								overlay.style.display = "none";
+								log("Reprodução iniciada com sucesso!");
+							})
+							.catch((e) => {
+								log(
+									"Autoplay bloqueado pelo browser. Clique no play do player.",
+								);
+								overlay.style.display = "none";
+							});
+					});
+
+					// Atualização contínua das estatísticas
+					setInterval(() => {
+						const progress = (videoFile.progress * 100).toFixed(1);
+						progressBar.style.width = progress + "%";
+						progressPercentEl.innerText = progress + "%";
+
+						downloadSpeedEl.innerText =
+							prettyBytes(torrent.downloadSpeed) + "/s";
+						uploadSpeedEl.innerText =
+							prettyBytes(torrent.uploadSpeed) + "/s";
+						numPeersEl.innerText = torrent.numPeers;
+					}, 500);
 				});
 
-				videoPlayer.addEventListener("playing", () => {
-					statusOverlay.style.display = "none";
+				client.on("error", function (err) {
+					log("Erro no cliente: " + err.message);
+					statusText.innerText = "Erro: " + err.message;
 				});
-
-				videoPlayer.addEventListener("canplay", () => {
-					statusOverlay.style.display = "none";
-				});
-
-				// Atualização de métricas na interface
-				setInterval(() => {
-					const progress = (videoFile.progress * 100).toFixed(1);
-					progressBar.style.width = progress + "%";
-					progressPercentEl.innerText = progress + "%";
-
-					downloadSpeedEl.innerText =
-						prettyBytes(torrent.downloadSpeed) + "/s";
-					uploadSpeedEl.innerText =
-						prettyBytes(torrent.uploadSpeed) + "/s";
-					numPeersEl.innerText = torrent.numPeers;
-				}, 500);
-			});
-
-			client.on("error", function (err) {
-				console.error("Erro no cliente WebTorrent:", err);
-				statusText.innerText = "Erro de rede: " + err.message;
 			});
 
 			function prettyBytes(num) {
