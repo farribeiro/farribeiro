@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="pt-BR">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Tocador WebTorrent - Sintel</title>
+
+		<!-- Última versão do WebTorrent via CDN (jsDelivr) -->
+		<script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
+
+		<style>
+			* {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+
+			body {
+				background-color: #0f172a;
+				color: #f8fafc;
+				font-family:
+					system-ui,
+					-apple-system,
+					BlinkMacSystemFont,
+					"Segoe UI",
+					Roboto,
+					Oxygen,
+					Ubuntu,
+					Cantarell,
+					sans-serif;
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				padding: 20px;
+			}
+
+			.container {
+				width: 100%;
+				max-width: 800px;
+				background: #1e293b;
+				border-radius: 12px;
+				padding: 24px;
+				box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+			}
+
+			h1 {
+				font-size: 1.5rem;
+				margin-bottom: 16px;
+				color: #38bdf8;
+				text-align: center;
+			}
+
+			.player-wrapper {
+				position: relative;
+				width: 100%;
+				aspect-ratio: 16 / 9;
+				background-color: #000;
+				border-radius: 8px;
+				overflow: hidden;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			video {
+				width: 100%;
+				height: 100%;
+				object-fit: contain;
+			}
+
+			.status-overlay {
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background: rgba(15, 23, 42, 0.85);
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				gap: 12px;
+				padding: 20px;
+				text-align: center;
+			}
+
+			.spinner {
+				width: 40px;
+				height: 40px;
+				border: 4px solid rgba(255, 255, 255, 0.1);
+				border-left-color: #38bdf8;
+				border-radius: 50%;
+				animation: spin 1s linear infinite;
+			}
+
+			@keyframes spin {
+				to {
+					transform: rotate(360deg);
+				}
+			}
+
+			.stats {
+				margin-top: 20px;
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+				gap: 12px;
+			}
+
+			.stat-card {
+				background: #0f172a;
+				padding: 12px;
+				border-radius: 6px;
+				text-align: center;
+			}
+
+			.stat-card span {
+				display: block;
+				font-size: 0.8rem;
+				color: #94a3b8;
+			}
+
+			.stat-card strong {
+				font-size: 1.1rem;
+				color: #f1f5f9;
+			}
+
+			.progress-bar-container {
+				width: 100%;
+				height: 8px;
+				background: #334155;
+				border-radius: 4px;
+				margin-top: 16px;
+				overflow: hidden;
+			}
+
+			.progress-bar {
+				height: 100%;
+				width: 0%;
+				background: #38bdf8;
+				transition: width 0.3s ease;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>WebTorrent Video Player</h1>
+
+			<div class="player-wrapper" id="player-container">
+				<div id="status-overlay" class="status-overlay">
+					<div class="spinner"></div>
+					<p id="status-text">
+						Conectando aos pares BitTorrent/WebRTC...
+					</p>
+				</div>
+			</div>
+
+			<div class="progress-bar-container">
+				<div id="progress-bar" class="progress-bar"></div>
+			</div>
+
+			<div class="stats">
+				<div class="stat-card">
+					<span>Download</span>
+					<strong id="download-speed">0 KB/s</strong>
+				</div>
+				<div class="stat-card">
+					<span>Upload</span>
+					<strong id="upload-speed">0 KB/s</strong>
+				</div>
+				<div class="stat-card">
+					<span>Pares (Peers)</span>
+					<strong id="num-peers">0</strong>
+				</div>
+				<div class="stat-card">
+					<span>Progresso</span>
+					<strong id="progress-percent">0%</strong>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			const torrentUrl = "https://webtorrent.io/torrents/sintel.torrent";
+
+			// Inicializa o cliente WebTorrent
+			const client = new WebTorrent();
+
+			const statusOverlay = document.getElementById("status-overlay");
+			const statusText = document.getElementById("status-text");
+			const playerContainer = document.getElementById("player-container");
+			const progressBar = document.getElementById("progress-bar");
+
+			const downloadSpeedEl = document.getElementById("download-speed");
+			const uploadSpeedEl = document.getElementById("upload-speed");
+			const numPeersEl = document.getElementById("num-peers");
+			const progressPercentEl =
+				document.getElementById("progress-percent");
+
+			// Adiciona o torrent
+			client.add(torrentUrl, function (torrent) {
+				statusText.innerText =
+					"Buscando arquivo de vídeo no torrent...";
+
+				// Encontra o arquivo de vídeo dentro do torrent
+				const file = torrent.files.find(
+					(file) =>
+						file.name.endsWith(".mp4") ||
+						file.name.endsWith(".mkv") ||
+						file.name.endsWith(".webm"),
+				);
+
+				if (file) {
+					// Renderiza/carrega o vídeo diretamente dentro do contêiner HTML
+					file.appendTo(
+						playerContainer,
+						{ autoplay: true, controls: true },
+						function (err, elem) {
+							if (err) {
+								statusText.innerText =
+									"Erro ao carregar o vídeo: " + err.message;
+								return;
+							}
+							// Esconde o overlay de carregamento quando o vídeo começar a tocar
+							statusOverlay.style.display = "none";
+						},
+					);
+				} else {
+					statusText.innerText =
+						"Nenhum arquivo de vídeo compatível encontrado no torrent.";
+				}
+
+				// Atualiza as estatísticas em tempo real
+				torrent.on("download", function () {
+					updateStats(torrent);
+				});
+
+				torrent.on("upload", function () {
+					updateStats(torrent);
+				});
+
+				// Atualizações periódicas de status
+				setInterval(() => {
+					updateStats(torrent);
+				}, 1000);
+			});
+
+			client.on("error", function (err) {
+				console.error("Erro no WebTorrent:", err);
+				statusText.innerText =
+					"Erro na rede WebTorrent: " + err.message;
+			});
+
+			function updateStats(torrent) {
+				const progress = (torrent.progress * 100).toFixed(1);
+				progressBar.style.width = progress + "%";
+				progressPercentEl.innerText = progress + "%";
+
+				downloadSpeedEl.innerText =
+					prettyBytes(torrent.downloadSpeed) + "/s";
+				uploadSpeedEl.innerText =
+					prettyBytes(torrent.uploadSpeed) + "/s";
+				numPeersEl.innerText = torrent.numPeers;
+			}
+
+			// Função utilitária para formatar bytes em KB/MB
+			function prettyBytes(num) {
+				const units = ["B", "KB", "MB", "GB", "TB"];
+				if (num < 1) return "0 B";
+				const exponent = Math.min(
+					Math.floor(Math.log(num) / Math.log(1024)),
+					units.length - 1,
+				);
+				const approx = num / Math.pow(1024, exponent);
+				return `${approx.toFixed(1)} ${units[exponent]}`;
+			}
+		</script>
+	</body>
+</html>
