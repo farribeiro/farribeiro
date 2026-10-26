@@ -198,25 +198,30 @@
 			<div class="stats">
 				<div class="stat-card">
 					<span>Download</span>
-					<strong id="download-speed">0 KB/s</strong>
+					<strong id="download-speed"></strong>
 				</div>
 				<div class="stat-card">
 					<span>Upload</span>
-					<strong id="upload-speed">0 KB/s</strong>
+					<strong id="upload-speed"></strong>
 				</div>
 				<div class="stat-card">
 					<span>Peers</span>
-					<strong id="num-peers">0</strong>
+					<strong id="num-peers"></strong>
 				</div>
 				<div class="stat-card">
 					<span>Progresso Vídeo</span>
-					<strong id="progress-percent">0%</strong>
+					<strong id="progress-percent"></strong>
 				</div>
 			</div>
 
 			<div id="log-box">Pronto.</div>
 		</div>
-		<p style="aligin: center">Powered by <a href="https://github.com/webtorrent/webtorrent" target="_blank">WebTorrent v{{$root.webtorrentVersion}}</a></p>
+		<p style="aligin: center">
+			Powered by
+			<a href="https://github.com/webtorrent/webtorrent" target="_blank"
+				>WebTorrent v{{$root.webtorrentVersion}}</a
+			>
+		</p>
 		<script>
 			const torrentUrl = "https://webtorrent.io/torrents/sintel.torrent";
 			const videoPlayer = document.getElementById("video-player");
@@ -332,10 +337,12 @@
 			});
 
 			function prettyBytes(num) {
-				const units = ["bits", "Kilobits", "Megabits", "Gigabits", "Terabits"];
+				const units = ["bits", "Kilobit", "Megabit"];
 				if (num < 1) return "0 B";
 				const exponent = Math.min(
-					Math.floor(Math.log(num) / Math.log(1024)),
+					Math.floor(
+						(Math.log(num) / Math.log(1024)) * Math.log(1024),
+					),
 					units.length - 1,
 				);
 				const approx = num / Math.pow(1024, exponent);
