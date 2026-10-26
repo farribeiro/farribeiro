@@ -332,13 +332,13 @@
 			});
 
 			function prettyBytes(num) {
-				const units = ["B", "KB", "MB", "GB", "TB"];
+				const units = ["bits", "Kilobits", "Megabits", "Gigabits", "Terabits"];
 				if (num < 1) return "0 B";
 				const exponent = Math.min(
-					Math.floor(Math.log(num) / Math.log(1024)),
+					Math.floor(Math.log(num)) <!-- / Math.log(1024)), -->
 					units.length - 1,
 				);
-				const approx = num / Math.pow(1024, exponent);
+				const approx = num <!-- / Math.pow(1024, exponent); -->
 				return `${approx.toFixed(1)} ${units[exponent]}`;
 			}
 		</script>
