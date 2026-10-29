@@ -339,11 +339,9 @@
 			function prettyBytes(num) {
 				const units = ["bits", "Kilobit", "Megabit"];
 				if (num < 1) return "0 bit";
-				const mil = Math.log(1024))
+				const mil = Math.log(1024);
 				const exponent = Math.min(
-					Math.floor(
-						(Math.log(num) / mil * mil,
-					),
+					Math.floor((Math.log(num) / mil * mil),),
 					units.length - 1,
 				);
 				const approx = num / Math.pow(1024, exponent);
