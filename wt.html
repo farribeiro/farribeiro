@@ -243,8 +243,7 @@
 				client.add(torrentUrl, function (torrent) {
 					log("Torrent adicionado. Isolando arquivo de vídeo...");
 
-					// Desativa tudo para poupar banda e recursos
-					// torrent.files.forEach((file) => file.deselect());
+					// torrent.files.forEach((file) => file.deselect()); // Desativa tudo para poupar banda e recursos
 
 					// Acha apenas o MP4
 					const videoFile = torrent.files.find((file) =>
@@ -264,8 +263,8 @@
 					videoFile.select();
 
 					// Força prioridade imediata para o início (cabeçalho) e fim (metadados do MP4)
-					const startPiece = Math.floor(videoFile._startPiece);
-					const endPiece = Math.floor(videoFile._endPiece);
+					// const startPiece = Math.floor(videoFile._startPiece);
+					// const endPiece = Math.floor(videoFile._endPiece);
 
 					torrent.critical(
 						startPiece,
