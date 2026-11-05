@@ -15,7 +15,7 @@
 			}
 
 			body {
-				background-color: #0f172a;
+				/* background-color: #0f172a; */
 				color: #f8fafc;
 				font-family:
 					system-ui,
@@ -263,8 +263,8 @@
 					videoFile.select();
 
 					// Força prioridade imediata para o início (cabeçalho) e fim (metadados do MP4)
-					// const startPiece = Math.floor(videoFile._startPiece);
-					// const endPiece = Math.floor(videoFile._endPiece);
+					const startPiece = Math.floor(videoFile._startPiece);
+					const endPiece = Math.floor(videoFile._endPiece);
 
 					torrent.critical(
 						startPiece,
