@@ -210,9 +210,11 @@
 			</div>
 
 			<div id="log-box">Pronto.</div>
+			<div id="url"></div>
 		</div>
 		<script>
 			const torrentUrl = "https://webtorrent.io/torrents/sintel.torrent";
+			const turl = document.getElementById("url").innerText(torrentUrl);
 			const videoPlayer = document.getElementById("video-player");
 			const overlay = document.getElementById("overlay");
 			const btnStart = document.getElementById("btn-start");
